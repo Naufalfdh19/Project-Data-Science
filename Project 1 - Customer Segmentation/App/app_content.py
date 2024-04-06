@@ -15,13 +15,14 @@ def home_content():
     stc.html('<div style="border-top: 2px solid black; margin: 5px 0;"></div>', height=10)
     st.markdown(desc_temp)
 
+
 # machine learning 
 def ml_content():
     
     st.markdown("""## Machine Learning Section""")
-    with st.expander("Prosedur For Using Machine Learning"):
+    with st.expander("Steps to Obtain Your Customer Segmentation"):
         st.markdown(prosedur_ml)
-    with st.expander("Attribute Info"):
+    with st.expander("Attribute Information"):
         st.markdown(attribute_info)
     st.markdown("""
                 ### Which Customer Segmentation Do You Belong To?
@@ -34,9 +35,9 @@ def ml_content():
         age = st.number_input("Age",10, 70)
         graduated = st.radio("Graduated", ['Yes', 'No'])
         profession = st.selectbox("Profession", ['Healthcare', 'Engineer', 'Lawyer', 'Artist', 'Doctor','Homemaker', 'Entertainment', 'Marketing', 'Executive'])
-        work_experience = st.number_input("work_experience", 1, 30)
-        spending_score = st.selectbox("spending_score", ["Low", "Medium", "High"])
-        family_size = st.number_input("Family_Size", 1, 12)
+        work_experience = st.number_input("work_experience", 0, 30)
+        spending_score = st.selectbox("spending_score", ["Low", "Average", "High"])
+        family_size = st.number_input("Family_Size", 0, 12)
     
     with st.expander("Your Selected Options"):
         result = {
@@ -61,8 +62,15 @@ def predict(result):
         loaded_pkl = joblib.load(open(os.path.join(model_file), 'rb'))
         return loaded_pkl
     
-    df = pd.DataFrame(result, index=[0])
+    def apply_log(column):
+        return np.log(column+1)
     
+    df = pd.DataFrame(result, index=[0])
+    df['Age'] = apply_log(df['Age'])
+    df['Work_Experience'] = apply_log(df['Work_Experience'])
+    df['Family_Size'] = apply_log(df['Family_Size'])
+    
+
     for keys in result.keys():
         value = result[keys]
         if keys == 'Gender':
@@ -75,6 +83,7 @@ def predict(result):
             df[keys] = spensco[value]
     
     df = pd.get_dummies(df)
+
     for kolom in train_column:
         if kolom not in df.columns:
             df[kolom] = 0
@@ -82,16 +91,16 @@ def predict(result):
     scaler = load_pkl('scaler.pkl')
     
     df = df[train_column]
-    df = df.drop(columns=['Segmentation'])
+    # df = df.drop(columns=['Segmentation'])
     df = scaler.transform(df.loc[0].values.reshape(1,-1))
-    
+ 
     # prediction section
     st.subheader('Prediction Result')
     # Menambahkan kolom-kolom yang hilang pada data baru
 
     # st.write(single_array)
 
-    model = load_pkl("model_svm.pkl")
+    model = load_pkl("model_xgb.pkl")
 
     pred_proba = model.predict_proba(df)
     # Mendapatkan daftar label kelas dari model
@@ -107,3 +116,7 @@ def predict(result):
     # Menampilkan hasil prediksi
     st.success(f"Congratulations, you are in {predicted_group}")
     st.write("Probability for each class", pred_probability_score)
+    
+    # Explaination about the segment
+    st.write(f"Profile {predicted_group}")
+    st.write(profiling[predicted_group[-1]])

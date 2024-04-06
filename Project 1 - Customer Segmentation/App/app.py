@@ -4,8 +4,7 @@ from app_content import *
 from data import *
 
 
-        
-
+    
 def main():
     stc.html(title)
     
