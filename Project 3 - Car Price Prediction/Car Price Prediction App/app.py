@@ -7,6 +7,8 @@ from data import *
         
 
 def main():
+    stc.html(title)
+    
     menu = ['Home', 'Machine Learning']
     choice = st.sidebar.selectbox("Menu", menu)
     # Tulisan di sidebar dengan style HTML untuk pusat
